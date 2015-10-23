@@ -1,15 +1,10 @@
 <html>
 <header></header>
 <body>
-<br />
-<input id="userName" />
-<input type="submit" onclick="summonerLookUp();" />
-<br />
-<br />Summoner Level: <span id="sLevel"></span>
-<script> 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
 var sumName = "";
 
-function summonerLookUp() {
+var summonerLookUp = function() {
     var SUMMONER_NAME = "";
     SUMMONER_NAME = $("#userName").val();
 
@@ -33,7 +28,6 @@ function summonerLookUp() {
                 summonerID = json[SUMMONER_NAME_NOSPACES].id;
 
                 document.getElementById("sLevel").innerHTML = summonerLevel;
-                document.getElementById("sID").innerHTML = summonerID;
                 
                 sumName = json[SUMMONER_NAME_NOSPACES].name;
             },
@@ -47,7 +41,11 @@ function summonerLookUp() {
 function Name() {
     alert(sumName);
 }
-
 </script>
+<br />
+<input id="userName" />
+<input type="submit" onclick="summonerLookUp()" />
+<br />
+<br />Summoner Level: <span id="sLevel"></span>
 </body>
 </html>
