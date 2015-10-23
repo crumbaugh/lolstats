@@ -1,10 +1,6 @@
 <html>
 <header></header>
 <body>
-DEV KEY
-<br />
-<input id="theKey" />
-<br />Summoner Name
 <br />
 <input id="userName" />
 <input type="submit" onclick="summonerLookUp();" />
@@ -18,7 +14,6 @@ function summonerLookUp() {
     SUMMONER_NAME = $("#userName").val();
 
     var API_KEY = "2228c38d-efb6-49e3-921f-49e6c3e57078";
-    API_KEY = $("#theKey").val();
 
     if (SUMMONER_NAME !== "") {
 
