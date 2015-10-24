@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <title>Sample GUI</title>
+  <link rel = "stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/gui-style.css">
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/jquery-1.11.3.js"></script>
+  </head>
+  <body>
+		
+	<div id = "champion_user"></div>
+	<div id = "container1">
+		
+		<div class = "items" id = "user">
+			<button class = "ind_item btn btn-default" 
+				type="button" >
+			</button>
+				<div id = "item_screen_user" display = "none">
+					<!-- need to create search_for_items.php -->
+					<form action = "search_for_items.php">
+						<input type = "text" class = "itemname">
+					</form>
+					<div class="item_rec"></div>
+					<div class="item_rec" id="smaller_margin"></div>
+				</div>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			<script>
+			$("#user .ind_item").click(function(){
+				$("#item_screen_user").show();
+				$("#item_screen_opponent").hide();
+			});
+			</script>
+		</div>
+	</div>
+	<div id = "champion_opponent"></div>
+	<div id = "container2">
+		<div class = "items" id = "opponent">
+			<div id = "item_screen_opponent" >
+				<!-- need to create search_for_items.php -->
+					<form action = "search_for_items.php">
+						<input type = "text" class = "itemname">
+					</form>
+					<div class="item_rec"></div>
+					<div class="item_rec" id="smaller_margin"></div>
+			</div>
+			<button class = "ind_item btn btn-default" 
+				type="button" >
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			
+			<button class = "ind_item btn btn-default" 
+				type="button">
+			</button>
+			<script>
+			$("#opponent .ind_item").click(function(){
+				$("#item_screen_opponent").show();
+				$('#item_screen_user').hide();
+			});
+			$(document).click(function(e) {
+				if (!( $(e.target).attr("id") === "item_screen_user" 
+					|| $(e.target).attr("id")==="item_screen_opponent" 
+					|| $(e.target).hasClass("ind_item")
+					|| $(e.target).hasClass("itemname")
+					|| $(e.target).hasClass("item_rec"))) {
+															$('#item_screen_user').hide();				
+															$('#item_screen_opponent').hide();
+				}
+			});
+			</script>
+		</div>
+	</div>
+  </body>
+</html>
