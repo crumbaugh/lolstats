@@ -31,7 +31,7 @@ var summonerLookUp = function() {
             success: function (json) {
 		var max_lvl = 18;
 		var base_speed = 0.625;
-    var base_attack = json.data[championName].stats.attackdamage;
+    		var base_attack = json.data[championName].stats.attackdamage;
 		var attack_scaling = json.data[championName].stats.attackdamageperlevel;
 		var base_attack_speed = base_speed/(1 + json.data[championName].stats.attackspeedoffset) * (1 + json.data[championName].stats.attackspeedperlevel/100 * (1-1));
 		var max_attack_scaling = base_attack_speed + ((base_attack_speed * json.data[championName].stats.attackspeedperlevel)/100) * (max_lvl - 1);
