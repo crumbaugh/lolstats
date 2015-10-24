@@ -1,9 +1,3 @@
-<!DOCTYPE HTML>
-
-<html>
-<head></head>
-<body>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
 var sumName = "";
 
 var summonerLookUp = function() {
@@ -43,11 +37,7 @@ var summonerLookUp = function() {
 function Name() {
     alert(sumName);
 }
-</script>
-<br />
-<input id="userName" />
-<input type="submit" onclick="summonerLookUp();" />
-<br />
-<br />Summoner Level: <span id="sLevel"></span>
-</body>
-</html>
+
+document.ready(function(){
+
+});
