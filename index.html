@@ -5,47 +5,244 @@
 <br/>
 <input id="userName" />
 <input type="submit" onclick="summonerLookUp()" />
+Unique Items<input type="checkbox" id="uniqueItems"/>
+Simulated Time<input type="text" id="timeInput"/>
+Enemy Armor<input type="text" id="armorInput"/>
+Enemy Magic Resist<input type="text" id="mrInput"/>
+<br>
 <br/>
 <br/>Ratio 1: <span id="coeff0"></span>
 <br/>Ratio 2: <span id="coeff1"></span>
 <br/>Ratio 3: <span id="coeff2"></span>
 <br/>Ratio 4: <span id="coeff3"></span>
+<br/>Best Item: <span id="bestItem"></span>
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script>
 var sumName = "";
 
+var API_KEY = "2228c38d-efb6-49e3-921f-49e6c3e57078";
+var apRatios;
+var adRatios;
+var baseAD, currAd = 0;
+var attackSpeed, currAs = 0;
+var currAp = 0;
+var currApMult = 1;
+var currCdr = 0;
+var attackSpeedPerLevel;
+var TIME = 5;
+var items;
+var nextItem = 0;
+var DISTINCT_ITEMS = true;
+var ARMOR = 100;
+var MR = 100;
+var currArmorPenPercent;
+var currFlatArmorPen;
+var currMagicPenPercent;
+var currFlatMagicPen;
+
 var summonerLookUp = function() {
+    document.getElementById("userName").onclick = "";
+    DISTINCT_ITEMS = document.getElementById("uniqueItems").checked;
+    TIME = document.getElementById("timeInput").value;
+    if (TIME == "") TIME = 5;
+    if (TIME < 1) TIME = 1;
+    
+    ARMOR = document.getElementById("armorInput").value;
+    if (ARMOR == "") ARMOR = 100;
+    if (ARMOR < 1) ARMOR = 1;
+    
+    MR = document.getElementById("mrInput").value;
+    if (MR == "") MR = 100;
+    if (MR < 1) MR = 1;
+    
     var championName = "";
     championName = $("#userName").val();
 
-    var API_KEY = "2228c38d-efb6-49e3-921f-49e6c3e57078";
-    
+    apRatios = 0;
+    adRatios = 0;
+    nextItem = 0;
+    currAs = 0;
+    currAd = 0;
+    currAp = 0;
+    currApMult = 1;
+    currCdr = 0;
+    items = ["0","0","0","0","0","0"];
+    currArmorPenPercent = 0;
+    currFlatArmorPen = 0;
+    currMagicPenPercent = 0;
+    currFlatMagicPen = 0;
+
     if (championName != "") {
         $.ajax({
-            url: 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/champion?champData=spells&api_key=' + API_KEY,
+            url: 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/champion?champData=all&api_key=' + API_KEY,
             type: 'GET',
             dataType: 'json',
             data: {
 
             },
             success: function (json) {
-                console.log(json);
-                var coefficients = ["n/a", "n/a", "n/a", "n/a"];
+                var baseSpeed = 0.625;
+                baseAD = json.data[championName].stats["attackdamage"] + 18 * json.data[championName].stats["attackdamageperlevel"];
+                attackSpeed = (baseSpeed / (1 + json.data[championName].stats["attackspeedoffset"]));  
+                attackSpeedPerLevel = json.data[championName].stats["attackspeedperlevel"];
+                var coefficients = [["", ""], ["", ""], ["", ""], ["", ""]];
                 for (var i = 0; i < 4; i++) {
-                    try {
-                        coefficients[i] = json.data[championName].spells[i].vars[0].coeff[0];
-                    } catch (err) {
-                        coefficients[i] = "n/a";
+                    for (var j = 0; j < 2; j++) {
+                        var cdFactor = 0;
+                        if (i == 3) cdFactor = 2;
+                        try {
+                            coefficients[i][j] = json.data[championName].spells[i].vars[j].coeff[0];
+                            if (json.data[championName].spells[i].vars[j].link == "bonusattackdamage" ||
+                                json.data[championName].spells[i].vars[j].link == "@dynamic.attackdamage" ||
+                                json.data[championName].spells[i].vars[j].link == "attackdamage") {
+                                adRatios += coefficients[i][j] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4-cdFactor]);        
+                            } else if (json.data[championName].spells[i].vars[j].link == "spelldamage") {
+                                apRatios += coefficients[i][j] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4-cdFactor]);
+                            }        
+                        } catch (err) {}
+                        document.getElementById("coeff" + i).innerHTML = coefficients[i][0] + "   " + coefficients[i][1];
                     }
-                    document.getElementById("coeff" + i).innerHTML = coefficients[i];
-                }    
+                }
+                findBestItem();
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
                 alert("error getting Summoner data!");
             }
+            
         });
     }
+}
+
+function findBestItem() {
+    $.ajax({
+    url: 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/item?itemListData=all&api_key=' + API_KEY,
+    type: 'GET',
+    dataType: 'json',
+    data: {
+
+    },
+    success: function (json) {
+        do {
+            var best = 0;
+            var bestID;
+            var itemID;
+            for (var i in json.data) {
+                if (!json.data[i].maps["11"])
+                    continue;
+                if (DISTINCT_ITEMS && (i == items[0] || i == items[1] || i == items[2] || i == items[3] ||  i == items[4]))
+                    continue;
+                var ad = 0;
+                var ap = 0;
+                var as = 0;
+                var crit = 1;
+                var cdr = 0;
+                var apMult = 0;
+                var armorPenPercent = 0;
+                var flatArmorPen = 0;
+                var magicPenPercent = 0;
+                var flatMagicPen = 0;
+
+                ap = json.data[i].stats["FlatMagicDamageMod"]; 
+                if (ap == undefined) ap = 0;
+
+                if (i == "3165" || i == "3115" || i == "3071") //Morello, Nashor's, Cleaver
+                    cdr = .2;
+                var totalCdr = cdr + currCdr;
+                if (totalCdr > .4) totalCdr = .4;
+
+                ad = json.data[i].stats["FlatPhysicalDamageMod"];
+                if (ad == undefined) ad = 0;
+
+                as = json.data[i].stats["PercentAttackSpeedMod"];
+                if (as == undefined) as = 0;
+            
+                crit = json.data[i].stats["FlatCritChanceMod"];
+                if (i == "3031" && items[0] != "3031"  && items[1] != "3031"  && items[2] != "3031"  && items[3] != "3031"  && items[4] != "3031") 
+                    crit *= 2.5/2; //Infinity Edge
+                if (crit == undefined) 
+                    crit = 0;
+                crit += 1;
+
+                if (i == "3035" && currArmorPenPercent == 0) //LW
+                    armorPenPercent = .35;
+
+                if (i == "3142" && currFlatArmorPen == 0) //Youmuu's
+                    flatArmorPen = 20;
+
+                if (i == "3135" && currMagicPenPercent == 0) //Void
+                    magicPenPercent = .35;
+
+                if (i == "3001" && items[0] != "3001"  && items[1] != "3001"  && items[2] != "3001"  && items[3] != "3001"  && items[4] != "3001") //Abyssal
+                    flatMagicPen = 20;
+                    
+                if (i == "3151" && items[0] != "3151"  && items[1] != "3151"  && items[2] != "3151"  && items[3] != "3151"  && items[4] != "3151") //Liandry's
+                    flatMagicPen = 15;
+
+                if (i == "3089" && items[0] != "3089"  && items[1] != "3089"  && items[2] != "3089"  && items[3] != "3089"  && items[4] != "3089")
+                    apMult = .35;
+
+                var aaDamage = ((ad + baseAD + currAd) * (attackSpeed * (1 + ((attackSpeedPerLevel * 17 + currAs) / 100 + as))) * TIME) * crit;
+                var adDamage = (currAd + baseAD + ad) * (adRatios/(1 - totalCdr)) + aaDamage;
+                adDamage *= (100/(100+(ARMOR*(1 - (currArmorPenPercent + armorPenPercent)) - (currFlatArmorPen + flatArmorPen))));
+                var apDamage = (apMult + currApMult) * (currAp + ap) * (apRatios/(1 - totalCdr));
+                apDamage *= (100/(100+(MR*(1 - (currMagicPenPercent + magicPenPercent)) - (currFlatMagicPen + flatMagicPen))));
+                var totalDamage = adDamage + apDamage;
+                if (totalDamage > best) {
+                    best = totalDamage;
+                    bestID = i;
+                }
+            }
+            
+            items[nextItem] = bestID;
+            nextItem++;
+            
+            var as = json.data[bestID].stats["PercentAttackSpeedMod"];
+            if (as == undefined) as = 0;
+            currAs += as;
+
+            var ad = json.data[bestID].stats["FlatPhysicalDamageMod"];
+            if (ad == undefined) ad = 0;
+            currAd += ad;
+            
+            var ap = json.data[bestID].stats["FlatMagicDamageMod"];
+            if (ap == undefined) ap = 0;
+            currAp += ap;
+
+            if (bestID == "3165" || bestID == "3115" || bestID == "3071") //Morello, Nashor's, Cleaver
+                currCdr += .2;
+            if (currCdr > .4) currCdr = .4;
+
+            if (bestID == "3089") //Rabs
+                currApMult = 1.35;
+    
+            if (bestID == "3035") //LW
+                currArmorPenPercent = .35;
+                
+            if (bestID == "3142") //Youmuu's
+                currFlatArmorPen = 20;
+            
+            if (bestID == "3135") //Void
+                currMagicPenPercent = .35;
+
+            if (bestID == "3001") //Abyssal
+                currFlatMagicPen += 20;
+                
+            if (bestID == "3151") //Liandry's
+                currFlatMagicPen += 15;
+        } while (nextItem < 6);
+        
+        var output = "";
+        for (var i = 0; i < 6; i++) {
+            output += json.data[items[i]].name + " - ";
+        }
+        document.getElementById("bestItem").innerHTML = output;  
+        document.getElementById("userName").onclick = "summonerLookUp()";
+    },
+    error: function (XMLHttpRequest, textStatus, errorThrown) {
+        alert("error getting Summoner data!");
+    }
+    });
 }
 
 function Name() {
