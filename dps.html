@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+</head>
+<body>
+<br/>
+<input id="userName" />
+<input type="submit" onclick="summonerLookUp()" />
+<br/>
+<br/>Base Damage per seconds: <span id="Dps"></span>
+<script>
+    
+var sumName = "";
+
+var summonerLookUp = function() {
+    var championName = "";
+    championName = $("#userName").val();
+
+    var API_KEY = "cd7c2e75-4032-4b14-946e-4cf1a2dde173";
+
+    if (championName != "") {
+        $.ajax({
+            url:'https://global.api.pvp.net/api/lol/static-data/na/v1.2/champion?dataById=1&champData=all&api_key=' + API_KEY,
+            type: 'GET',
+            dataType: 'json',
+            data: {
+
+            },
+            success: function (json) {
+		var max_lvl = 18;
+		var base_speed = 0.625;
+    var base_attack = json.data[championName].stats.attackdamage;
+		var attack_scaling = json.data[championName].stats.attackdamageperlevel;
+		var base_attack_speed = base_speed/(1 + json.data[championName].stats.attackspeedoffset) * (1 + json.data[championName].stats.attackspeedperlevel/100 * (1-1));
+		var max_attack_scaling = base_attack_speed + ((base_attack_speed * json.data[championName].stats.attackspeedperlevel)/100) * (max_lvl - 1);
+                document.getElementById("Dps").innerHTML = base_attack + (max_lvl * attack_scaling) * max_attack_scaling;
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("error getting Summoner data!");
+            }
+        });
+    }
+}
+
+function Name() {
+    alert(sumName);
+}
+</script>
+</body>
+</html>
