@@ -6,7 +6,10 @@
 <input id="userName" />
 <input type="submit" onclick="summonerLookUp()" />
 <br/>
-<br/>Summoner Level: <span id="sLevel"></span>
+<br/>Ratio 1: <span id="coeff0"></span>
+<br/>Ratio 2: <span id="coeff1"></span>
+<br/>Ratio 3: <span id="coeff2"></span>
+<br/>Ratio 4: <span id="coeff3"></span>
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script>
@@ -17,19 +20,26 @@ var summonerLookUp = function() {
     championName = $("#userName").val();
 
     var API_KEY = "2228c38d-efb6-49e3-921f-49e6c3e57078";
-
+    
     if (championName != "") {
         $.ajax({
-            url: 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/champion?champData=stats&api_key=' + API_KEY,
+            url: 'https://na.api.pvp.net/api/lol/static-data/na/v1.2/champion?champData=spells&api_key=' + API_KEY,
             type: 'GET',
             dataType: 'json',
             data: {
 
             },
             success: function (json) {
-                var blurb = json.data[championName].title;
-
-                document.getElementById("sLevel").innerHTML = blurb;
+                console.log(json);
+                var coefficients = ["n/a", "n/a", "n/a", "n/a"];
+                for (var i = 0; i < 4; i++) {
+                    try {
+                        coefficients[i] = json.data[championName].spells[i].vars[0].coeff[0];
+                    } catch (err) {
+                        coefficients[i] = "n/a";
+                    }
+                    document.getElementById("coeff" + i).innerHTML = coefficients[i];
+                }    
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
                 alert("error getting Summoner data!");
