@@ -1,4 +1,4 @@
-<<!DOCTYPE HTML>
+<!DOCTYPE HTML>
 
 <html>
 <head>
@@ -10,10 +10,10 @@
 <input type="submit" onclick="summonerLookUp()" />
 <br/>
 <br/>Base Damage per seconds: <span id="Dps"></span>
-<br/>Base Damage for q: <span id="spell0"></span>
-<br/>Base Damage for w: <span id="spell1"></span>
-<br/>Base Damage for e: <span id="spell2"></span>
-<br/>Base Damage for r: <span id="spell3"></span>
+<br/>Base Damage for max q: <span id="spell0"></span>
+<br/>Base Damage for max w: <span id="spell1"></span>
+<br/>Base Damage for max e: <span id="spell2"></span>
+<br/>Base Damage for max r: <span id="spell3"></span>
 <script>
     
 var sumName = "";
@@ -33,28 +33,52 @@ var summonerLookUp = function() {
 
             },
             success: function (json) {
-		console.log(json);
+		for (var j = 0; j <4; j++)
+			document.getElementById("spell" + j).innerHTML = " ";
 		var max_lvl = 18;
 		var base_speed = 0.625;
                 var base_attack = json.data[championName].stats.attackdamage;
 		var attack_scaling = json.data[championName].stats.attackdamageperlevel;
-		var base_attack_speed = base_speed/(1 + json.data[championName].stats.attackspeedoffset) * (1 + json.data[championName].stats.attackspeedperlevel/100 * (1-1));
+		var base_attack_speed = base_speed/(1 + json.data[championName].stats.attackspeedoffset);
 		var max_attack_scaling = base_attack_speed + ((base_attack_speed * json.data[championName].stats.attackspeedperlevel)/100) * (max_lvl - 1);
 		document.getElementById("Dps").innerHTML = base_attack + (max_lvl * attack_scaling) * max_attack_scaling;
-		console.log(json.data[championName].spells[0].vars[0].link);
-		for(i = 0; i < 4; i++){
+		for(var i = 0; i < 4; i++){
 			try {
-				if (json.data[championName].spells[i].vars[0].link == "attackdamage"){
-					document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1];
+				var dmg = false;
+				if(json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Base Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1)
+					dmg = true;
+				if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Damage")!= -1){
+					if (i == 3)
+						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
+					if (json.data[championName].spells[i].effect[1][4] >= json.data[championName].spells[i].effect[2][4]) {
+						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
+					}
+					else {
+						document.getElementbyId("spell" + i).innerHTML = json.data[championName].spell[i].effect[2][4];
+					}
 				}
-				else {
-					document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[2];
+				else if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Base Damage") != -1){
+					console.log(json.data[championName].spells[i].effect[1][2]);
+					if (i == 3){
+						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
+					}
+					else {
+						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
+					}
 				}
+				else if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1){
+					if (i == 3)
+						document.getElemenyById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
+					else {
+						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
+					}
+				
+				}
+				
+	
 			}
-		
-			catch(err){
-			
-			}
+			catch(err){}
+				
 		}
           },
 			
