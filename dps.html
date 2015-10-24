@@ -51,46 +51,38 @@ var summonerLookUp = function() {
 					dmg = true;
 				if(json.data[championName].spells[i].leveltip.label.indexOf("Percent Health Damaged") != -1)
 					dmg = false;
-				if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Damage")!= -1){
-					console.log("ffs");
-					if (effect_l < 2){
-						if (i == 3)
+				console.log(i);
+				if (dmg == true){ /* if there is a damage label to the skill */
+					if (i == 3){ /* if it's an ultimate */
+						console.log("ugh");
+						console.log(effect_l);
+						console.log(json.data[championName].spells[i].leveltip.label.indexOf("Damage" == -1));
+						if(effect_1 >= 2) {
+							if (json.data[championName].spells[i].leveltip.label.indexOf("Damage" == -1))
+								document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
+						}
+						else if (effect_l >= 2 & json.data[championName].spells[i].leveltip.label.indexOf("Damage" != -1)){
+							console.log("here");
+							document.getElementById("spell" + i).innerHTML = Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]);
+						}
+						else if (effect_1 < 2){
+							console.log("yay");
 							document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
-						else 
+						}
+					}
+					else {
+						if (effect_l < 2)
 							document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
-					}
-					else if (effect_l >= 2 & json.data[championName].spells[i].effect[1][4] < json.data[championName].spells[i].effect[2][4]){
-						if (i == 3)
-							document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[2][2];
 						else
-							document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[2][4];
-					}
-					else if (effect_l >= 2 & json.data[championName].spells[i].effect[1][4] > json.data[championName].spells[i].effect[2][4]){
-						docment.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[2][4];
+							document.getElementById("spell" + i).innerHTML = Math.max(json.data[championName].spells[i].effect[1][4], json.data[championName].spells[i].effect[2][4]);
 					}
 				}
-				else if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Base Damage") != -1){
-					console.log(json.data[championName].spells[i].effect[1][2]);
-					if (i == 3){
-						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][2];
-					}
-					else {
-						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
-					}
-				}
-				else if (dmg == true & json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1){
-					if (i == 3){
-						document.getElementById("spell" + i).innerHTML = Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]);
-					}
-					else {
-						document.getElementById("spell" + i).innerHTML = json.data[championName].spells[i].effect[1][4];
-					}
+			}
 				
-				}
-				else if (dmg == true & json.data[c
+
 				
 	
-			}
+			
 			catch(err){}
 				
 		}
