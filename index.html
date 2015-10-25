@@ -16,6 +16,7 @@ Enemy Magic Resist<input type="text" id="mrInput"/>
 <br/>Ratio 3: <span id="coeff2"></span>
 <br/>Ratio 4: <span id="coeff3"></span>
 <br/>Best Item: <span id="bestItem"></span>
+<br/>Total Damage: <span id="totalDamage"></span>
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script>
@@ -40,7 +41,10 @@ var currArmorPenPercent;
 var currFlatArmorPen;
 var currMagicPenPercent;
 var currFlatMagicPen;
-var baseDamages;
+var physicalDamageFromSpells;
+var magicDamageFromSpells;
+var championName = "";
+var best;
 
 var calculateBestBuild = function() {
     document.getElementById("userName").onclick = "";
@@ -57,7 +61,6 @@ var calculateBestBuild = function() {
     if (MR == "") MR = 100;
     if (MR < 1) MR = 1;
     
-    var championName = "";
     championName = $("#userName").val();
 
     apRatios = 0;
@@ -73,6 +76,8 @@ var calculateBestBuild = function() {
     currFlatArmorPen = 0;
     currMagicPenPercent = 0;
     currFlatMagicPen = 0;
+    magicDamageFromSpells = 0;
+    physicalDamageFromSpells = 0;
 
     if (championName != "") {
         $.ajax({
@@ -127,7 +132,7 @@ function findBestItem() {
     },
     success: function (json) {
         do {
-            var best = 0;
+            best = 0;
             var bestID;
             var itemID;
             for (var i in json.data) {
@@ -186,9 +191,9 @@ function findBestItem() {
                     apMult = .35;
 
                 var aaDamage = ((ad + baseAD + currAd) * (attackSpeed * (1 + ((attackSpeedPerLevel * 17 + currAs) / 100 + as))) * TIME) * crit;
-                var adDamage = (currAd + baseAD + ad) * (adRatios/(1 - totalCdr)) + aaDamage;
+                var adDamage = (currAd + baseAD + ad) * (adRatios/(1 - totalCdr)) + aaDamage + (physicalDamageFromSpells * (1 - totalCdr));
                 adDamage *= (100/(100+(ARMOR*(1 - (currArmorPenPercent + armorPenPercent)) - (currFlatArmorPen + flatArmorPen))));
-                var apDamage = (apMult + currApMult) * (currAp + ap) * (apRatios/(1 - totalCdr));
+                var apDamage = ((apMult + currApMult) * (currAp + ap) * (apRatios/(1 - totalCdr))) + (magicDamageFromSpells * (1 - totalCdr));
                 apDamage *= (100/(100+(MR*(1 - (currMagicPenPercent + magicPenPercent)) - (currFlatMagicPen + flatMagicPen))));
                 var totalDamage = adDamage + apDamage;
                 if (totalDamage > best) {
@@ -241,6 +246,8 @@ function findBestItem() {
         }
         document.getElementById("bestItem").innerHTML = output;  
         document.getElementById("userName").onclick = "summonerLookUp()";
+        document.getElementById("totalDamage").innerHTML = best;  
+    
     },
     error: function (XMLHttpRequest, textStatus, errorThrown) {
         alert("error getting Summoner data!");
@@ -250,7 +257,9 @@ function findBestItem() {
 
 function getBaseDamages(json) {
     for(var i = 0; i < 4; i++){
-			try {
+        var magicDamage = 0;
+        var physicalDamage = 0;
+        try {
 				var dmg = false;
 				var effect_l = json.data[championName].spells[i].effect.length - 1;
 				if(json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Base Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Damage Dealt") != -1)
@@ -260,27 +269,47 @@ function getBaseDamages(json) {
 				if (dmg == true){ 
 					if (i == 3){
 						if (effect_l >= 2 && json.data[championName].spells[i].leveltip.label.indexOf("Damage") == -1) {
-							baseDamages[i] = json.data[championName].spells[i].effect[1][2];
-						}
-						else if ((effect_l >= 2) && (json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1)){
-							baseDamages[i] = Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]);
-						}
+                            if (json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1) 
+                                magicDamage += json.data[championName].spells[i].effect[1][2] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);
+                            else 
+                                physcialDamage += json.data[championName].spells[i].effect[1][2] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);    
+                        }
+                        else if ((effect_l >= 2) && (json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1)){
+                            if (json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1) 
+                                magicDamage += Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]) 
+                                                         * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);
+                            else 
+                                physicalDamage += Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]) 
+                                                            * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);                            
+                        }
 						else if (effect_1 < 2){
-							baseDamages[i] = json.data[championName].spells[i].effect[1][2];
-						}
+                            if (json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1) 
+                                magicDamage += json.data[championName].spells[i].effect[1][2] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);
+                            else 
+                                physcialDamage += json.data[championName].spells[i].effect[1][2] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[2]);
+                        }
 					}
 					else {
 						if (effect_l < 2)
-							baseDamages[i] = json.data[championName].spells[i].effect[1][4];
+                            if (json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1) 
+                                magicDamage += json.data[championName].spells[i].effect[1][4] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4]);
+                            else 
+                                physcialDamage += json.data[championName].spells[i].effect[1][4] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4]);
 						else
-							baseDamages[i] = Math.max(json.data[championName].spells[i].effect[1][4], json.data[championName].spells[i].effect[2][4]);
+                            if (json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1) 
+                                magicDamage += Math.max(json.data[championName].spells[i].effect[1][4], json.data[championName].spells[i].effect[2][4]) 
+                                                         * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4]);
+                            else 
+                                physicalDamage += Math.max(json.data[championName].spells[i].effect[1][4], json.data[championName].spells[i].effect[2][4]) 
+                                                            * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4]);                            
 					}
 				}
-				else {
-					baseDamages[i] = 0;
-				}
-			} catch (err) {}
-				
+            } catch (err) { 
+                magicDamage = 0;
+                physicalDamage = 0;
+            }
+			magicDamageFromSpells += magicDamage;
+            physicalDamageFromSpells += physicalDamage;
 		}
 }
 </script>
