@@ -4,7 +4,7 @@
 <body>
 <br/>
 <input id="userName" />
-<input type="submit" onclick="summonerLookUp()" />
+<input type="submit" onclick="calculateBestBuild()" />
 Unique Items<input type="checkbox" id="uniqueItems"/>
 Simulated Time<input type="text" id="timeInput"/>
 Enemy Armor<input type="text" id="armorInput"/>
@@ -40,8 +40,9 @@ var currArmorPenPercent;
 var currFlatArmorPen;
 var currMagicPenPercent;
 var currFlatMagicPen;
+var baseDamages;
 
-var summonerLookUp = function() {
+var calculateBestBuild = function() {
     document.getElementById("userName").onclick = "";
     DISTINCT_ITEMS = document.getElementById("uniqueItems").checked;
     TIME = document.getElementById("timeInput").value;
@@ -82,6 +83,8 @@ var summonerLookUp = function() {
 
             },
             success: function (json) {
+                getBaseDamages(json);
+                
                 var baseSpeed = 0.625;
                 baseAD = json.data[championName].stats["attackdamage"] + 18 * json.data[championName].stats["attackdamageperlevel"];
                 attackSpeed = (baseSpeed / (1 + json.data[championName].stats["attackspeedoffset"]));  
@@ -245,8 +248,40 @@ function findBestItem() {
     });
 }
 
-function Name() {
-    alert(sumName);
+function getBaseDamages(json) {
+    for(var i = 0; i < 4; i++){
+			try {
+				var dmg = false;
+				var effect_l = json.data[championName].spells[i].effect.length - 1;
+				if(json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Base Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Magic Damage") != -1 || json.data[championName].spells[i].leveltip.label.indexOf("Damage Dealt") != -1)
+					dmg = true;
+				if(json.data[championName].spells[i].leveltip.label.indexOf("Percent Health Damaged") != -1)
+					dmg = false;
+				if (dmg == true){ 
+					if (i == 3){
+						if (effect_l >= 2 && json.data[championName].spells[i].leveltip.label.indexOf("Damage") == -1) {
+							baseDamages[i] = json.data[championName].spells[i].effect[1][2];
+						}
+						else if ((effect_l >= 2) && (json.data[championName].spells[i].leveltip.label.indexOf("Damage") != -1)){
+							baseDamages[i] = Math.max(json.data[championName].spells[i].effect[1][2], json.data[championName].spells[i].effect[2][2]);
+						}
+						else if (effect_1 < 2){
+							baseDamages[i] = json.data[championName].spells[i].effect[1][2];
+						}
+					}
+					else {
+						if (effect_l < 2)
+							baseDamages[i] = json.data[championName].spells[i].effect[1][4];
+						else
+							baseDamages[i] = Math.max(json.data[championName].spells[i].effect[1][4], json.data[championName].spells[i].effect[2][4]);
+					}
+				}
+				else {
+					baseDamages[i] = 0;
+				}
+			} catch (err) {}
+				
+		}
 }
 </script>
 </html>
