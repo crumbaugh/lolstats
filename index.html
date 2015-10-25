@@ -3,19 +3,15 @@
 <html>
 <body>
 <br/>
-<input id="userName" />
+<input id="userName" placeholder = "Champion Name"/>
 <input type="submit" onclick="calculateBestBuild()" />
+<input type="text" id="timeInput" placeholder = "Simulation Length (s)"/>
+<input type="text" id="armorInput" placeholder = "Enemy Armor"/>
+<input type="text" id="mrInput" placeholder = "Enemy Magic Resist"/>
 Unique Items<input type="checkbox" id="uniqueItems"/>
-Simulated Time<input type="text" id="timeInput"/>
-Enemy Armor<input type="text" id="armorInput"/>
-Enemy Magic Resist<input type="text" id="mrInput"/>
 <br>
 <br/>
-<br/>Ratio 1: <span id="coeff0"></span>
-<br/>Ratio 2: <span id="coeff1"></span>
-<br/>Ratio 3: <span id="coeff2"></span>
-<br/>Ratio 4: <span id="coeff3"></span>
-<br/>Best Item: <span id="bestItem"></span>
+<br/>Best Item Build: <span id="bestItem"></span>
 <br/>Total Damage: <span id="totalDamage"></span>
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -50,7 +46,7 @@ var calculateBestBuild = function() {
     document.getElementById("userName").onclick = "";
     DISTINCT_ITEMS = document.getElementById("uniqueItems").checked;
     TIME = document.getElementById("timeInput").value;
-    if (TIME == "") TIME = 5;
+    if (TIME == "") TIME = 3;
     if (TIME < 1) TIME = 1;
     
     ARMOR = document.getElementById("armorInput").value;
@@ -109,7 +105,6 @@ var calculateBestBuild = function() {
                                 apRatios += coefficients[i][j] * Math.ceil(TIME/json.data[championName].spells[i].cooldown[4-cdFactor]);
                             }        
                         } catch (err) {}
-                        document.getElementById("coeff" + i).innerHTML = coefficients[i][0] + "   " + coefficients[i][1];
                     }
                 }
                 findBestItem();
